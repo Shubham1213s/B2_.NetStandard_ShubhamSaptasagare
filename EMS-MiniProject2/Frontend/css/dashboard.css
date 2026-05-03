@@ -1,0 +1,258 @@
+/* Dashboard screens */
+
+.dashboard-heading {
+    margin-bottom: 1rem;
+}
+
+.dashboard-section-card {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 1rem;
+    overflow: hidden;
+    box-shadow: 0 10px 22px rgba(15, 23, 42, 0.08);
+    height: 100%;
+}
+
+.dashboard-card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 1rem 1.15rem;
+    background: linear-gradient(135deg, #24324a 0%, #334766 100%);
+    color: #fff;
+    font-weight: 600;
+}
+
+.dashboard-card-header i {
+    font-size: 1rem;
+}
+
+.dashboard-header-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.35rem 0.7rem;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    background: rgba(255, 255, 255, 0.12);
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.dashboard-card-body {
+    padding: 1rem 1.15rem 1.15rem;
+    background: #fff;
+}
+
+/* Dashboard KPI Cards - Option 3: White cards with colored left border */
+.kpi-card {
+    background: #ffffff;
+    box-shadow: var(--shadow-md);
+    transition: all var(--transition-base);
+    overflow: hidden;
+    position: relative;
+}
+
+.kpi-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-xl);
+}
+
+/* Colored left border per card */
+.kpi-border-blue   { border-left: 5px solid #0066cc !important; }
+.kpi-border-green  { border-left: 5px solid #059669 !important; }
+.kpi-border-red    { border-left: 5px solid #e11d48 !important; }
+.kpi-border-violet { border-left: 5px solid #7c3aed !important; }
+
+/* Icon box - colored background, matching card accent */
+.kpi-icon-box {
+    width: 48px;
+    min-width: 48px;
+    max-width: 48px;
+    height: 48px;
+    border-radius: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 1.2rem;
+}
+
+.kpi-icon-blue   { background: rgba(0, 102, 204, 0.1); color: #0066cc; }
+.kpi-icon-green  { background: rgba(5, 150, 105, 0.1); color: #059669; }
+.kpi-icon-red    { background: rgba(225, 29, 72, 0.1);  color: #e11d48; }
+.kpi-icon-violet { background: rgba(124, 58, 237, 0.1); color: #7c3aed; }
+
+.kpi-label {
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: normal;
+    line-height: 1.3;
+}
+
+.kpi-value {
+    font-size: 1.7rem;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    letter-spacing: -0.5px;
+    line-height: 1.2;
+    white-space: nowrap;
+}
+
+.kpi-salary {
+    font-size: 1.3rem;
+}
+
+/* Department breakdown and recent employees */
+.dept-row-hover:hover {
+    background: #f8fafc;
+}
+
+.dept-progress {
+    background-color: #e5e7eb;
+}
+
+.recent-emp-list {
+    display: flex;
+    flex-direction: column;
+}
+
+.recent-emp-item {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    padding: 1rem 1.15rem;
+    border-bottom: 1px solid #eef2f7;
+}
+
+.recent-emp-item:last-child {
+    border-bottom: 0;
+}
+
+.recent-emp-avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.85rem;
+}
+
+.recent-avatar-blue { background: #0d6efd; }
+.recent-avatar-green { background: #198754; }
+.recent-avatar-teal { background: #0dcaf0; }
+.recent-avatar-purple { background: #6f42c1; }
+.recent-avatar-orange { background: #fd7e14; }
+
+.recent-emp-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.recent-emp-name {
+    font-weight: 700;
+    color: #111827;
+    line-height: 1.2;
+}
+
+.recent-emp-role {
+    color: #6b7280;
+    font-size: 0.88rem;
+    margin-top: 0.15rem;
+}
+
+.recent-emp-meta {
+    margin-top: 0.45rem;
+}
+
+.recent-dept-badge,
+.recent-join-badge,
+.recent-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    border-radius: 0.25rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.recent-dept-badge {
+    padding: 0.35rem 0.65rem;
+    color: #fff;
+}
+
+.recent-join-badge {
+    padding: 0.3rem 0.55rem;
+    background: #f3f4f6;
+    color: #4b5563;
+}
+
+.recent-emp-status {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.45rem;
+    white-space: nowrap;
+}
+
+.recent-status-badge {
+    padding: 0.32rem 0.55rem;
+    color: #fff;
+}
+
+.status-badge-active {
+    background: #16a34a;
+}
+
+.status-badge-inactive {
+    background: #dc2626;
+}
+
+.status-active,
+.status-inactive {
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    display: inline-block;
+}
+
+.status-active {
+    background: #86efac;
+}
+
+.status-inactive {
+    background: #fda4af;
+}
+
+/* Dashboard label safety */
+.card-body > div > span:first-child {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
+@media (max-width: 576px) {
+    .dashboard-card-header,
+    .dashboard-card-body {
+        padding: 0.9rem;
+    }
+
+    .recent-emp-item {
+        align-items: flex-start;
+    }
+
+    .recent-emp-status {
+        align-items: center;
+    }
+}

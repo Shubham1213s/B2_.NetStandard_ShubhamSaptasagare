@@ -1,0 +1,42 @@
+body
+{
+    background:#f4f6f9;
+}
+
+.navbar-brand
+{
+    font-weight:bold;
+}
+
+#totalEmployeesCard, #activeEmployeesCard, #inactiveEmployeesCard, #departmentsCard{
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+    cursor: default;
+}
+#totalEmployeesCard:hover, #activeEmployeesCard:hover, #inactiveEmployeesCard:hover, #departmentsCard:hover{
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18) !important;
+}
+
+.bg-dept-marketing {
+    background-color: #b45309 !important;
+    color: #fff !important;
+}
+
+.badge
+{
+    font-size:14px;
+}
+
+table
+{
+    background:white;
+}
+
+.progress {
+    background-color: #e9ecef;
+    border-radius: 10px;
+}
+
+.progress-bar {
+    border-radius: 10px;
+}

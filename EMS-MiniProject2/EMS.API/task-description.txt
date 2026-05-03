@@ -1,0 +1,1028 @@
+Problem Statement- Employee Management System - II
+Employee Management System 
+1. Overview
+Mini Project 2 is the continuation of Mini Project 1 — Employee Management Dashboard. In that project, you built a fully modular, service-oriented frontend using HTML5, CSS3, Bootstrap 5, JavaScript (ES6+), and jQuery, with all employee data stored in a static data.js array and all business logic distributed across seven service modules.
+
+In this project, you will evolve that same frontend into a true full-stack application by replacing the static data layer with a real .NET 8 Web API backed by SQL Server 2022, managed through Entity Framework Core (Code First). The frontend service architecture you built in Mini Project 1 — especially the storageService.js boundary — was specifically designed so that this transition requires changes to the minimum number of files possible.
+
+By the end of Mini Project 2, the application will support persistent employee data, real database-backed authentication, role-based access control (Admin and Viewer), server-side search, filter, sort, and pagination — all exposed through a fully documented REST API with Swagger / OpenAPI.
+
+
+2. Problem Statement
+
+Background
+In Mini Project 1, XYZ Solutions was given a working frontend HR portal. However, all data lived in the browser's memory and was lost on every page refresh. The HR team cannot use a system where records disappear when the browser is closed, and the IT security team requires proper password hashing and role-based access before the system can go live.
+
+The company now needs the frontend to be connected to a real backend system that:
+
+•	Persists all employee records in SQL Server 2022 — data survives restarts and is shared across all users
+•	Authenticates users with securely hashed passwords (BCrypt) stored in the database
+•	Enforces role-based access — Admins can add, edit, and delete employees; Viewers can only read
+•	Performs search, filtering, sorting, and pagination entirely in SQL Server — not in the browser
+•	Exposes all functionality through a well-documented REST API (Swagger / OpenAPI)
+
+
+Your Task
+
+Build a .NET 8 Web API that serves as the backend for the Employee Management Dashboard frontend built in Mini Project 1. Connect both layers so the complete application runs end-to-end against a live SQL Server 2022 database.
+
+You are required to:
+
+•	Build and run the .NET 8 Web API with Entity Framework Core Code First migrations
+•	Update storageService.js on the frontend to make real HTTP calls to the API (replacing in-memory array access)
+•	Update authService.js to call the real login and register API endpoints
+•	Implement role-based access — the API enforces it via a custom middleware; the frontend reflects it in the UI
+•	Implement server-side pagination on the Employee List with page controls in the UI
+
+
+Technology Stack
+
+
+Layer 	 Technology 	Version / Detail 
+
+Backend  Framework 	.NET Web API 	8.0 (LTS) 
+
+ORM 	  =Entity Framework Core 	Code First — migrations managed via dotnet ef 
+
+Database 	SQL Server 	2022 (local) 
+
+Password Hashing 	BCrypt.Net-Next 	v4.0.3 
+
+API Documentation 	Swagger / Swashbuckle 	OpenAPI 3.0 
+
+Frontend 	HTML5, CSS3, Bootstrap 5 	Same as Mini Project 1 — no changes to HTML/CSS
+ 
+Frontend JS 	Vanilla JS (ES6+), jQuery 3.x 	Same modules as Mini Project 1 — only storageService.js and authService.js change 
+
+
+3. What Changes from Mini Project 1
+
+
+The table below shows precisely which files change, which are new, and which remain completely untouched. 
+
+This is the payoff of the service architecture built in Mini Project 1.
+
+File 	Status 	What Changes 
+
+js/config.js 	NEW 	Added — stores API_BASE_URL (http://localhost:5000/api) and PAGE_SIZE constant 
+
+js/storageService.js 	REPLACED 	All methods now make fetch() calls to the API. Sends Authorization: Bearer  header on every request using AuthService.getToken(). This is the only data-layer change. 
+
+js/authService.js 	UPDATED 	login() and signup() now call /api/auth/login and /api/auth/register. Stores the returned JWT token and role in-memory. Exposes getToken() so storageService can send Authorization: Bearer  on every request. 
+
+js/employeeService.js 	UPDATED 	Methods are now async/await delegates to storageService. applyFilters() is removed — filtering and sorting now happen on the server. 
+
+js/dashboardService.js 	UPDATED 	getSummary() now calls /api/employees/dashboard — one API call returns KPIs, department breakdown, and recent employees together. 
+
+js/uiService.js 	UPDATED 	renderEmployeeTable() now accepts a paged result object and renders a Bootstrap pagination bar. applyRoleUI() shows/hides write buttons based on Admin/Viewer role. 
+
+js/app.js 	UPDATED 	All data operations are now async/await. Pagination state (_state.page, _state.pageSize) is tracked and sent with every employee list request. Debounced search. 
+
+js/validationService.js 	MINOR UPDATE 	Added mapServerErrors() to translate API 409 Conflict responses into field-level inline errors.
+ 
+index.html 	UPDATED 	Added pagination bar container, role badge in navbar, Viewer-mode notice panel. Script load order updated (config.js first). 
+
+css/styles.css 	UPDATED 	Added pagination button styles. 
+
+data.js 	RETIRED 	No longer a data store. Replaced by config.js. Seed data is now in AppDbContext.cs (EF Core HasData). 
+
+storageService.js (MP1) 	UNCHANGED — INTERFACE 	The public method names (getAll, getById, add, update, remove) are identical. Only the implementation inside changed. 
+
+tests/ (MP1 tests) 	UNCHANGED 	All Jest unit tests from Mini Project 1 continue to pass because they mock storageService — they test business logic, not the data source. 
+
+Key Principle:  Every file above the storageService.js boundary — employeeService, dashboardService, validationService, uiService, app.js — required zero architectural changes. Only the data access layer changed. This is the architectural discipline Mini Project 1 was designed to teach.
+
+
+4. Backend — Database Design (Code First)
+
+Entity Framework Core Code First is used throughout. Models are defined as C# classes; EF generates the SQL Server tables via migrations. The database is created and seeded automatically when the application starts.
+
+4.1  Employee Table 
+ 
+Column 	C# Type 	SQL Type 	Constraints / Notes 
+
+Id 	int 	INT IDENTITY 	Primary Key — auto-increment 
+
+FirstName 	string 	NVARCHAR(100) 	Required 
+
+LastName 	string 	NVARCHAR(100) 	Required 
+
+Email 	string 	NVARCHAR(200) 	Required · Unique index 
+
+Phone 	string 	NVARCHAR(15) 	Required · 10-digit validated by API 
+
+Department 	string 	NVARCHAR(50) 	Required · One of: Engineering, Marketing, HR, Finance, Operations 
+
+Designation 	string 	NVARCHAR(100) 	Required 
+
+Salary 	decimal 	DECIMAL(18,2) 	Required · Must be positive 
+
+JoinDate 	DateTime 	DATETIME2 	Required · Stored as UTC 
+
+Status 	string 	NVARCHAR(10) 	Required · 'Active' or 'Inactive' 
+
+CreatedAt 	DateTime 	DATETIME2 	Auto-set on insert — used to determine 'recent' employees 
+
+UpdatedAt 	DateTime 	DATETIME2 	Auto-updated on every PUT request 
+
+
+4.2  AppUser Table (Admin / Viewer Accounts)
+
+Column 	C# Type 	SQL Type 	Constraints / Notes 
+
+Id 	int 	INT IDENTITY 	Primary Key 
+
+Username 	string 	NVARCHAR(100) 	Required · Unique index · Case-insensitive check on login 
+
+PasswordHash 	string 	NVARCHAR(MAX) 	BCrypt hash — never plain text 
+
+Role 	string 	NVARCHAR(20) 	'Admin' or 'Viewer' — enforced at the API middleware layer 
+
+CreatedAt 	DateTime 	DATETIME2 	Auto-set on registration 
+
+
+4.3  Seed Data 
+
+•	15 employee records seeded via AppDbContext.HasData() — identical to the Mini Project 1 data.js dataset 
+
+•	2 default user accounts seeded: 
+
+o	admin / admin123  →  Role: Admin  (full CRUD access) 
+
+o	viewer / viewer123  →  Role: Viewer  (read-only access) 
+
+•	Migrations are applied manually via dotnet ef database update before the first run — not auto-run on startup
+ 
+•	Seed data is inserted by the migration itself (HasData) — applied once when Update-Database is run 
+
+5. Backend — REST API Design 
+
+5.1  Base URL and Port 
+
+API Base URL:  http://localhost:5000/api  (configurable in appsettings.json) 
+
+Swagger UI:  http://localhost:5000/swagger  (available in all environments) 
+ 
+5.2  Authentication Endpoints 
+
+Method 	Endpoint 	Role Required 	Description 
+
+POST 	/api/auth/register 	None 	Register a new Admin or Viewer account. Username must be unique. Password minimum 6 characters. 
+
+POST 	/api/auth/login 	None 	Authenticate a user. Returns { success, username, role, token }. The frontend stores the JWT token in-memory and sends it as Authorization: Bearer  on all subsequent requests. 
+
+
+
+5.3  Employee Endpoints
+
+Method 	Endpoint 	Role Required 	Description 
+
+GET 	/api/employees 	Admin + Viewer 	Paginated employee list. Accepts query params: search, department, status, sortBy, sortDir, page, pageSize. All filtering and sorting executes as SQL — not in JavaScript. 
+
+GET 	/api/employees/{id} 	Admin + Viewer 	Returns a single employee by ID. Returns 404 if not found. 
+
+GET 	/api/employees/dashboard 	Admin + Viewer 	Returns dashboard KPIs, department breakdown, and last 5 employees in a single response. Computed in SQL Server. 
+
+POST 	/api/employees 	Admin only 	Creates a new employee. Validates all fields server-side. Returns 409 Conflict if email already exists. 
+
+PUT 	/api/employees/{id} 	Admin only 	Updates an existing employee. Returns 404 if not found, 409 if email conflicts with another record. 
+
+DELETE 	/api/employees/{id} 	Admin only 	Deletes an employee. Returns 404 if not found. 
+
+
+5.4  Query Parameters — GET /api/employees
+
+Parameter 	Type 	Default 	Description 
+
+search 	string 	(none) 	Matches firstName + lastName (combined) and email — case-insensitive LIKE query in SQL 
+
+department 	string 	(none) 	Exact match filter — Engineering | Marketing | HR | Finance | Operations 
+
+status 	string 	(none) 	Exact match filter — Active | Inactive 
+
+sortBy 	string 	name 	Sort field — name | salary | joinDate 
+
+sortDir 	string 	asc 	Sort direction — asc | desc 
+
+page 	int 	1 	1-based page number 
+
+pageSize 	int 	10 	Records per page — capped at 100 by the API 
+
+
+5.5  Paginated Response Envelope 
+
+GET /api/employees returns the following JSON structure: 
+
+Property 	Type 	Description 
+
+data 	Employee[] 	The current page of employee records 
+
+totalCount 	int 	Total number of records matching the active filters
+ 
+page 	int 	Current page number (1-based) 
+
+pageSize 	int 	Records returned in this page 
+
+totalPages 	int 	Total number of pages — computed as ceil(totalCount / pageSize) 
+
+hasNextPage 	bool 	true if page < totalPages 
+
+hasPrevPage 	bool 	true if page > 1 
+
+
+5.6  Role-Based Access Control 
+
+Role-based access is enforced via standard ASP.NET Core JWT authorization. The frontend stores the JWT after login and sends it as a Bearer token on every request.
+ 
+•	After login, the frontend stores the user's role in-memory via authService.js 
+
+•	[Authorize] — any authenticated user; returns 401 if token missing/expired 
+
+•	[Authorize(Roles="Admin")] — Admin only; returns 403 for Viewer JWT 
+
+•	[AllowAnonymous] — on auth endpoints; no token required 
+
+•	Token signature, issuer, audience, and expiry validated automatically 
+
+ Frontend Role UI:  After login the JWT is decoded client-side to read the role claim. Viewers see no Add, Edit, or Delete buttons. uiService.applyRoleUI() is called after every login using AuthService.isAdmin() — which checks the decoded role stored in-memory. 
+
+
+
+6. Backend — Project File Structure (EMS.API)
+
+ 
+EMS-MiniProject2/ 
+│ 
+├── EMS.API/                         ← .NET 8 Web API 
+│   ├── Controllers/ 
+│   │   ├── EmployeesController.cs  ← CRUD + /dashboard + pagination 
+│   │   └── AuthController.cs       ← /auth/register + /auth/login 
+│   ├── Data/ 
+│   │   └── AppDbContext.cs         ← EF Core DbContext + seed data 
+│   ├── DTOs/ 
+│   │   └── EmployeeDtos.cs         ← request/response/paged DTOs 
+│   ├ 
+│   ├── appsettings.json            ← connection string + JWT config 
+│   ├── Models/ 
+│   │   ├── Employee.cs 
+│   │   └── AppUser.cs 
+│   ├── Services/ 
+│   │   ├── EmployeeService.cs      ← Server-side filter/sort/pagination 
+├   │   ├── IEmployeeRepository.cs  ← Data access contract (interface) 
+├   │   ├── EmployeeRepository.cs   ← Data Access Interface Implementation    
+│   │   └── AuthService.cs          ← BCrypt hashing + role management=JWT    
+│   ├── appsettings.json            ← SQL Server connection string 
+│   ├── Program.cs                  ← DI, CORS, Swagger,JWT Authentication 
+│   └── EMS.API.csproj 
+│ 
+└── frontend/                        ← Updated frontend from Mini Project 1 
+    ├── index.html 
+    ├── css/styles.css 
+    └── js/ 
+        ├── config.js               ← NEW: API_BASE_URL constant 
+        ├── storageService.js       ← REPLACED: real fetch() API calls 
+        ├── authService.js          ← UPDATED: calls /api/auth/* 
+        ├── employeeService.js      ← UPDATED: async delegates 
+        ├── validationService.js    ← MINOR: added mapServerErrors() 
+        ├── dashboardService.js     ← UPDATED: single API call 
+        ├── uiService.js            ← UPDATED: pagination + role UI 
+        └── app.js                  ← UPDATED: async/await + pagination state
+
+
+
+6.1 Backend Service Responsibilities
+
+
+File 	Responsibility 
+
+AppDbContext.cs 	EF Core DbContext. Defines DbSet and DbSet. Configures unique indexes. Seeds 15 employees and 2 users via HasData(). 
+
+EmployeeService.cs 	All employee business logic. getAll() builds a SQL query applying search, department, status filters and sort — then paginates using Skip/Take. No data is ever loaded into memory before filtering. 
+
+AuthService.cs 	User registration (BCrypt hash on write) and login (BCrypt verify on read). Duplicate username check. Returns role on successful login. Generates and validates JWT tokens. GenerateToken(AppUser) returns a signed JWT with username, role, and expiry claims
+ 
+IEmployeeRepository.cs 	Data access contract for Employee entities. Defines the interface that decouples EmployeeService from EF Core — enabling pure Moq unit tests. Each method has a single data responsibility
+ 
+EmployeeRepository.cs 	All Employee business logic.Repository Design pattern implementation as Data Access Layer .EF Core implementation of IEmployeeRepository Interface contracts 
+ 
+EmployeesController.cs 	REST endpoints: GET (paged list), GET by id, POST, PUT, DELETE, GET /dashboard. All responses use EmployeeResponseDto — entity models are never serialised directly. 
+
+AuthController.cs 	POST /register and POST /login. Delegates to AuthService. Returns AuthResponseDto. 
+
+EmployeeDtos.cs 	All DTOs: EmployeeRequestDto (validated input), EmployeeResponseDto (output), PagedResult (pagination envelope), EmployeeQueryParams (query string binding), DashboardSummaryDto, AuthRequestDto/ResponseDto.
+ 
+Program.cs 	Configures DI, EF Core with SQL Server, CORS, JWT Authentication and Authorization, Swagger with Bearer token support. Middleware order: UseCors → UseAuthentication → UseAuthorization → MapControllers. Database migrations are applied manually via dotnet ef database update — not auto-run on startup.  
+
+
+6.2  JWT Authentication & Authorization
+
+Mini Project 2 uses industry-standard JSON Web Token (JWT) authentication. JWTs are self-contained tokens that carry the user's identity and role — the backend validates every request without hitting the database each time.
+
+How JWT Works in This Project
+
+Step 	What Happens 
+
+1. Login 	Client sends username + password to POST /api/auth/login 
+
+2. Token issued 	API validates credentials via BCrypt, generates a signed JWT containing { userId, username, role, expiry } and returns it to the client
+ 
+3. Token stored 	Frontend stores the JWT in memory (authService.js). Never stored in localStorage — XSS risk 
+
+4. Authenticated request 	Every subsequent API call sends: Authorization: Bearer  in the request header 
+
+5. Validation 	ASP.NET Core JWT middleware validates the token signature, expiry, and claims on every request automatically — no manual header parsing 
+
+6. Authorisation 	[Authorize(Roles="Admin")] attribute on controllers restricts endpoints — returns 401/403 automatically if token is missing or role is wrong 
+
+
+
+
+NuGet Packages Required (Avoid deprecated ones and install stable one)
+
+Package 	Version 	Purpose 
+
+Microsoft.AspNetCore.Authentication.JwtBearer 	8.0.0 	JWT middleware for ASP.NET Core 
+
+Microsoft.IdentityModel.Tokens 	7.x 	Token validation and signing 
+
+System.IdentityModel.Tokens.Jwt 	7.x 	JWT creation and parsing 
+
+BCrypt.Net-Next 	4.0.3 	Password hashing 
+
+
+appsettings.json — JWT Configuration
+
+ "Jwt": { 
+    "Key":     "YourSuperSecretKey_Min32Chars_ChangeThis!", 
+    "Issuer":  "EMS.API", 
+    "Audience":"EMS.Client", 
+    "ExpiryHours": 8 
+  } 
+
+
+
+Program.cs — Register JWT Middleware 
+
+// ── JWT Authentication ──────────────────────────────────────────────────────── 
+var jwtKey = builder.Configuration["Jwt:Key"]!; 
+ 
+builder.Services 
+
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme) 
+
+    .AddJwtBearer(o => 
+    { 
+        o.TokenValidationParameters = new TokenValidationParameters 
+        { 
+            ValidateIssuerSigningKey = true, 
+
+            IssuerSigningKey         = new SymmetricSecurityKey( 
+                                           Encoding.UTF8.GetBytes(jwtKey)),
+ 
+            ValidateIssuer           = true, 
+
+            ValidIssuer              = builder.Configuration["Jwt:Issuer"],
+ 
+            ValidateAudience         = true, 
+
+            ValidAudience            = builder.Configuration["Jwt:Audience"],
+ 
+            ValidateLifetime         = true, 
+
+            ClockSkew                = TimeSpan.Zero   // no grace period on expiry 
+        }; 
+    }); 
+ 
+
+builder.Services.AddAuthorization();  … 
+
+ 
+AuthService — Token Generation 
+
+      private string GenerateToken(AppUser user) 
+
+    { 
+        var claims = new[] 
+
+        { 
+            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()), 
+            new Claim(ClaimTypes.Name,           user.Username), 
+            new Claim(ClaimTypes.Role,           user.Role) 
+        }; 
+ 
+        var key   = new SymmetricSecurityKey( 
+
+                        Encoding.UTF8.GetBytes(config["Jwt:Key"]!)); 
+
+        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256); 
+ 
+        var token = new JwtSecurityToken( 
+            issuer:             config["Jwt:Issuer"], 
+
+            audience:           config["Jwt:Audience"], 
+            claims:             claims, 
+
+            expires:            DateTime.UtcNow.AddHours( 
+                                    double.Parse(config["Jwt:ExpiryHours"] ?? "8")), 
+
+            signingCredentials: creds); 
+ 
+        return new JwtSecurityTokenHandler().WriteToken(token); 
+    } 
+} 
+
+
+Controller Authorization 
+
+  [Authorize]                         // any authenticated user 
+
+  [Authorize(Roles = "Admin")]        // Admin only — returns 403 for Viewer 
+
+  [Authorize(Roles = "Admin,Viewer")] // both roles 
+
+  [AllowAnonymous]                    // auth endpoints — no token required 
+ 
+
+Frontend — Sending the JWT 
+
+  // authService.js — store token after login 
+
+  const result = await StorageService.login(credentials); 
+
+  _session = { username: result.username, role: result.role, token: result.token }; 
+ 
+  // storageService.js — attach token to every request 
+
+  function _headers(withAuth = true) { 
+
+    const headers = { "Content-Type": "application/json" }; 
+
+    if (withAuth) { 
+
+      const token = AuthService.getToken?.(); 
+
+      if (token) headers["Authorization"] = `Bearer ${token}`; 
+
+    } 
+
+    return headers; 
+
+  } 
+
+
+Security Note:  Never store JWTs in localStorage or sessionStorage — they are vulnerable to XSS attacks. Store the token in a JavaScript variable (in-memory) as done here. The token is lost on page refresh, requiring re-login — this is the correct behaviour for a secure session.
+
+
+
+7. Core Features to Implement
+
+7.1  Admin Authentication (via API)
+
+Register
+
+•	POST /api/auth/register — accepts { username, password, role } 
+
+•	Password hashed with BCrypt (12 rounds) before storage — never stored in plain text 
+
+•	Duplicate username rejected with HTTP 409 Conflict and a specific error message 
+
+•	Role must be 'Admin' or 'Viewer' — defaults to 'Viewer' if omitted  
+
+Login
+•	POST /api/auth/login — accepts { username, password } 
+
+•	BCrypt.Verify() checks the submitted password against the stored hash 
+
+•	Returns { success, username, role, message } on success 
+
+•	Returns HTTP 401 with { success: false, message } on failure — does not indicate which field is wrong 
+
+•	The frontend stores the JWT token and role in-memory via authService.js. Every subsequent API request sends Authorization: Bearer  in the header
+
+
+7.2  Dashboard (Server-Computed)
+
+•	GET /api/employees/dashboard returns all dashboard data in a single API call
+
+•	Total Employees, Active count, Inactive count, and Total Departments — computed via SQL COUNT() and GROUP BY
+
+•	Department Breakdown — per-department employee count and percentage, sorted alphabetically
+
+•	Recent Employees — last 5 added, ordered by CreatedAt descending then Id descending
+
+•	All four KPI card values update automatically after every CRUD operation (frontend re-fetches dashboard after each mutation)
+
+
+7.3  Employee List with Server-Side Search, Filter, Sort, and Pagination
+
+Search
+
+•	Real-time search — frontend debounces 350ms then sends updated request to API
+
+•	API performs: WHERE (FirstName + ' ' + LastName LIKE '%term%' OR Email LIKE '%term%') — case-insensitive
+
+Filter
+•	Department filter — exact match WHERE Department = @dept
+
+•	Status filter — exact match WHERE Status = @status
+
+•	Search + Department + Status all apply simultaneously (AND logic) in a single SQL query
+
+
+Sort
+
+•	Sort by Name (lastName asc/desc, thenBy firstName)
+
+•	Sort by Salary (asc/desc)
+
+•	Sort by Join Date (asc/desc)
+
+•	Sort executes as ORDER BY in SQL — not in JavaScript
+
+
+Pagination
+
+•	API accepts page (1-based) and pageSize (default 10, max 100)
+
+•	Skip/Take executes in SQL — only the current page's records are transferred over the network
+
+•	Frontend renders a Bootstrap pagination bar showing page numbers, Prev and Next buttons
+
+•	Pagination state is tracked in app.js _state object alongside search/filter/sort state
+
+•	Record count label shows: 'Showing X–Y of Z employees'
+
+
+7.4  CRUD Operations (via API)
+
+Create — POST /api/employees
+
+•	Client-side validation runs first (validationService.js) — prevents unnecessary API calls
+
+•	API validates server-side (Data Annotations on EmployeeRequestDto) — returns 400 with field errors if invalid
+
+•	If email already exists, API returns 409 Conflict — frontend maps this to an inline email field error
+
+•	On success: 201 Created with the new employee object; frontend refreshes table and dashboard
+
+Read — GET /api/employees/{id}
+
+•	View button fetches the full employee record from the API by ID
+
+•	Displayed in a read-only Bootstrap Modal — no data cached in the DOM
+
+
+Update — PUT /api/employees/{id}
+
+•	Edit button fetches the employee by ID, pre-populates the Add/Edit modal
+
+•	Same client-side + server-side validation as Create
+
+•	API allows the same email address to be submitted (edit without changing email) — excludes the current employee from the uniqueness check
+
+•	On success: 200 OK with updated employee object; frontend refreshes table and dashboard
+
+Delete — DELETE /api/employees/{id}
+
+•	Delete button shows a confirmation modal with the employee's full name
+
+•	On confirmation: DELETE /api/employees/{id} called; 200 OK returned on success
+
+•	Frontend refreshes table and dashboard; navigates back to page 1 if the deleted record was the last on the current page
+
+7.5  Navigation, Layout, and Role-Based UI
+
+•	Fixed-top Bootstrap Navbar with application name, Dashboard and Employees links, role badge, and Logout button
+
+•	'Add Employee' button in the Navbar — visible to Admin only (hidden for Viewer via uiService.applyRoleUI())
+
+•	Edit and Delete action buttons per table row — visible to Admin only
+
+•	A 'You have read-only access' notice bar displayed in the Employee List view when logged in as Viewer
+
+•	View (eye) button is available to both Admin and Viewer
+
+•	Logout clears the in-memory session and redirects to the Login view
+
+
+8. Setup, Migration & Run Instructions
+
+Step 1 — Prerequisites
+
+Tool 	Version 	Where to get it 
+
+.NET SDK 	8.0+ 	https://dotnet.microsoft.com/download 
+
+SQL Server 	2022 (local) 	Microsoft website — Express edition is free 
+
+dotnet-ef CLI tool 	Latest 	dotnet tool install --global dotnet-ef 
+
+VS Code + Live Server 	Any 	VS Code Marketplace 
+
+Node.js (for MP1 tests) 	18+ 	https://nodejs.org (only needed for Jest tests)
+
+ 
+Step 2 — Add Necessary NuGet Packages for EF Core , Sql Server and BCrypt NuGet Packages using CLI or using NuGet Package Manager Console or NuGet Package Manager for Solution
+
+1.	Microsoft.EntityFrameworkCore   
+2.	Microsoft.EntityFrameworkCore.SqlServer  
+3.	Microsoft.EntityFrameworkCore.Tools  
+4.	Microsoft.AspNetCore.Authentication.JwtBearer
+
+
+ Note: Choose stable versions  compatible to .NET 8)
+ 
+
+Step 3 – Add BCrypt Package
+
+Open a terminal in the EMS.API folder and run:
+
+ dotnet add package BCrypt.Net-Next --version 4.0.3
+
+
+Step 4 — Configure the Connection String
+
+Open EMS.API/appsettings.json and verify:
+
+  "DefaultConnection": "Server=localhost;Database=EMSDashboard;Trusted_Connection=True;TrustServerCertificate=True;"
+
+For a named SQL Server instance (e.g., SQLEXPRESS), change Server= to Server=localhost\SQLEXPRESS
+
+
+Step 5— Register the AppDbContext in Program.cs
+
+// ── EF Core + SQL Server ──────────────────────────────────────────────────────
+
+var connStr = builder.Configuration.GetConnectionString("DefaultConnection");
+ 
+if (string.IsNullOrEmpty(connStr))
+{
+throw new InvalidOperationException("DefaultConnection is missing in configuration.");
+}
+ 
+
+builder.Services.AddDbContext<AppDbContext>(options =>
+options.UseSqlServer(connStr));
+
+
+Step 6 — Run EF Migrations commands in PM Console  
+
+PM > Add-Migration InitialCreate
+PM -> Update-Database
+
+
+Step 7— Add API controllers as async  with  necessary action methods and use construction injection  
+
+
+
+Step 8- Run the API  
+
+cd EMS.API && dotnet run
+
+Note : Don’t forget to do Step 6- Run EF Migrations commands in PM Console before starting the API for the first time. This creates the database, tables, and seed data. The API startup does not auto-migrate — this is intentional to match enterprise practice.
+
+
+Step 9 - Open the Frontend
+
+In VS Code, right-click frontend/index.html → Open with Live Server (port 5500). Or open the file directly in Chrome from your app folder— both origins are whitelisted in the API's CORS policy.
+
+
+9. Backend Testing with NUnit and Moq 
+
+The backend includes a dedicated test project using NUnit as the test framework and Moq for mocking dependencies. Tests cover the service layer — EmployeeService and AuthService — without hitting a real database. 
+
+Test Project Setup 
+
+NuGet Package 	Version 	Purpose 
+
+NUnit 	4.x 	Test framework — [Test], [SetUp], [TestCase] 
+
+NUnit3TestAdapter 	4.x 	Runs NUnit tests inside Visual Studio Test Explorer
+ 
+Microsoft.NET.Test.Sdk 	17.x 	Test host — required for dotnet test to work 
+
+Moq 	4.x 	Mocking framework — mock interfaces without real implementations 
+
+Microsoft.EntityFrameworkCore.InMemory 	8.0 	In-memory EF database for integration-style tests 
+
+
+Project Structure
+EMS-MiniProject2/ 
+├── EMS.API/                  ← main API project 
+└── EMS.Tests/                ← NUnit test project 
+    ├── EMS.Tests.csproj 
+    ├── Services/ 
+    │   ├── EmployeeServiceTests.cs 
+    │   └── AuthServiceTests.cs 
+    └── Controllers/ 
+        └── EmployeesControllerTests.cs 
+ 
+
+Creating the Test Project
+
+  # In Package Manager Console or terminal: 
+
+  dotnet new nunit -n EMS.Tests 
+
+  dotnet add EMS.Tests reference EMS.API 
+
+  dotnet add EMS.Tests package Moq 
+
+  dotnet add EMS.Tests package Microsoft.EntityFrameworkCore.InMemory 
+ 
+
+Unit Tests vs Integration Tests — Separation of Concerns
+
+Type 	Unit Tests 	Integration Tests 
+
+Tools 	NUnit + Moq 	NUnit + EF Core InMemory 
+
+Mocks 	Mock 	Real DbContext (in-memory) 
+
+Tests 	Business logic in isolation 	Service + DB interaction together 
+
+Speed 	Very fast — no DB 	Slower — full EF pipeline 
+
+Location 	Services/EmployeeServiceTests.cs 	Integration/EmployeeIntegrationTests.cs 
+
+
+Repository Interface — Required for Moq
+
+
+For pure unit testing, EmployeeService must depend on an interface, not directly on AppDbContext. This allows Moq to substitute a fake repository with no database involved.
+
+
+// IEmployeeRepository.cs — the abstraction Moq mocks 
+
+  public interface IEmployeeRepository 
+  { 
+      Task GetByIdAsync(int id); 
+
+      Task AddAsync(Employee employee); 
+
+... 
+      Task EmailExistsAsync(string email, int? excludeId); 
+
+  } 
+
+
+Example: EmployeeServiceTests.cs — Pure Unit Test with Moq
+
+ 
+  [TestFixture] 
+
+  public class EmployeeServiceTests 
+
+  { 
+
+      private Mock _repoMock; 
+
+      private EmployeeService _service; 
+ 
+      [SetUp] 
+
+      public void Setup() 
+
+      { 
+          _repoMock = new Mock();
+ 
+          _service  = new EmployeeService(_repoMock.Object); 
+
+      } 
+ 
+      [Test] 
+
+      public async Task GetByIdAsync_ValidId_ReturnsMappedDto() 
+
+      { 
+          // Arrange — tell the mock what to return 
+
+          var fakeEmployee = new Employee { Id=1, FirstName="Priya", 
+
+              LastName="Prabhu", Email="p@h.com", Status="Active" }; 
+
+          _repoMock.Setup(r => r.GetByIdAsync(1)) 
+
+                   .ReturnsAsync(fakeEmployee); 
+ 
+          // Act 
+          var result = await _service.GetByIdAsync(1); 
+ 
+          // Assert 
+          Assert.That(result, Is.Not.Null); 
+
+          Assert.That(result!.FirstName, Is.EqualTo("Priya")); 
+
+          _repoMock.Verify(r => r.GetByIdAsync(1), Times.Once); 
+
+      } 
+
+      [Test] 
+
+      public async Task GetByIdAsync_NonExistentId_ReturnsNull() 
+      { 
+
+          _repoMock.Setup(r => r.GetByIdAsync(9999)).ReturnsAsync((Employee?)null); 
+
+          var result = await _service.GetByIdAsync(9999); 
+
+          Assert.That(result, Is.Null); 
+      } 
+  }  
+
+
+Example: AuthServiceTests.cs — using Moq for IConfiguration 
+
+  [Test] 
+
+  public async Task LoginAsync_ValidCredentials_ReturnsToken() 
+
+  { 
+
+      // Arrange — mock IConfiguration for JWT settings 
+
+      var mockConfig = new Mock(); 
+
+      mockConfig.Setup(c => c["Jwt:Key"]) 
+
+               .Returns("TestSecretKey_32Chars_ForNUnit!!");
+ 
+      mockConfig.Setup(c => c["Jwt:Issuer"]).Returns("EMS.API"); 
+
+      mockConfig.Setup(c => c["Jwt:Audience"]).Returns("EMS.Client");
+ 
+ 
+      var svc = new AuthService(_db, mockConfig.Object); 
+ 
+      // Act 
+      var result = await svc.LoginAsync( 
+
+          new LoginRequestDto { Username="admin", Password="admin123" }); 
+ 
+      // Assert 
+
+      Assert.That(result.Success, Is.True); 
+
+      Assert.That(result.Token,   Is.Not.Null.And.Not.Empty); 
+
+  }  
+
+
+Running Tests 
+
+  # CLI 
+  dotnet test EMS.Tests 
+ 
+  # Visual Studio — Test Explorer → Run All 
+ 
+Minimum Test Requirements
+
+Test Class 	Minimum Test Cases Required 
+
+
+EmployeeServiceTests (Unit) 	Uses Mock — no DbContext; GetByIdAsync valid ID returns mapped DTO; GetByIdAsync invalid ID returns null; CreateAsync calls AddAsync on repo; Verify() confirms mock interactions 
+
+AuthServiceTests (Unit+Moq) 	Mock used for JWT settings; LoginAsync valid credentials returns token string; LoginAsync wrong password returns failure; RegisterAsync duplicate username returns failure; GenerateToken returns non-empty string 
+
+Integration Tests (EF InMemory) 	AppDbContext with UseInMemoryDatabase; add employee persists and is retrievable; delete removes record; email uniqueness enforced; dashboard summary counts correct 
+
+
+10. Deliverables & Submission 
+
+10.1 Submit a ZIP folder named: 
+ 
+[YourBatchNo]_[YourName]_EmployeeManagementSystem_MiniProject_2 
+
+The ZIP must contain the complete project structure as described in Section 6, including: 
+
+EMS.API/ — complete .NET 8 Web API project (all .cs files, .csproj, appsettings.json) 
+
+frontend/ — all updated JS files, index.html, css/styles.css 
+
+README.md — your name, batch, and the exact commands to run the API and frontend 
+
+
+
+10.2 Publish the project to another folder and submit the published folder also as a Zip Folder . Follow the below steps to
+
+  
+
+Submission Rule:  Before running the API for the first time: run Add dotnet ef database update in the EMS.API directory. Then start the API with dotnet run. Open frontend/index.html with Live Server. Examiners will run Update-Database then F5 — ensure both work without errors. 
+ 
+Submit via the LMS portal before the deadline communicated by your trainer 
+
+11. Looking Ahead — What You Have Built 
+
+Across Mini Project 1 and Mini Project 2 you have now built a production-grade, full-stack HR application from scratch. The table below summarises the complete evolution: 
+
+Capability 	Mini Project 1 	Mini Project 2 
+
+Data persistence 	In-memory JS array (lost on refresh) 	SQL Server 2022 — survives restarts; schema managed via EF Core migrations (dotnet ef database update) 
+
+Authentication 	In-memory username/password object 	.NET API + BCrypt + JWT token returned on login; Bearer token sent on all requests 
+
+Authorization 	Not implemented 	[Authorize(Roles="Admin")] on write endpoints; [AllowAnonymous] on auth endpoints; no custom middleware 
+
+Role-based access 	Not implemented 	JWT claims + [Authorize(Roles)] — Admin gets full CRUD, Viewer gets read-only 
+
+Search & filter 	JavaScript array filter in browser 	SQL WHERE clause — executes in the database 
+
+Sort 	JavaScript Array.sort() in browser 	SQL ORDER BY — executes in the database 
+
+Pagination 	All records loaded at once 	SQL Skip/Take — only current page transferred 
+
+API documentation 	None 	Swagger / OpenAPI — fully interactive 
+
+Frontend changes 	N/A 	Only storageService.js replaced — all other modules unchanged 
+
+Backend testing 	No tests 	NUnit + Moq test project — EmployeeService, AuthService, Controllers tested 
+
+
+Architecture Achievement:  The fact that employeeService.js, dashboardService.js, validationService.js, uiService.js, and app.js required zero architectural changes between Mini Project 1 and Mini Project 2 is not accidental. It is the direct result of the storageService.js boundary you were asked to maintain. This pattern — isolating the data access layer — is used in every professional full-stack application.
+
+
+
+Evaluation Rubrics
+
+Functional Requirements [35 Marks]
+
+Feature Area	What Is Expected	Marks
+
+Register & Login	POST /api/auth/register and /login work correctly; BCrypt password hashing confirmed; duplicate username rejected; JWT token returned on login with correct claims (username, role, expiry)	5
+
+JWT Enforcement	Every protected endpoint validates Authorization header; expired/invalid tokens return 401; Viewer token on write endpoints returns 403; [Authorize(Roles)] applied correctly	5
+
+
+JWT Role Enforcement	Endpoints validated using [Authorize]; Admin endpoints return 403 for Viewer JWT; missing/expired token returns 401; [AllowAnonymous] allows unauthenticated access	5
+
+Dashboard — API computed	GET /api/employees/dashboard returns correct aggregated metrics and recent employees; data accurate with DB	3
+
+Employee List — Rendering	All columns rendered; record count label correct; alternate row shading; role-based action buttons	3
+
+Server-side Search	Search via SQL LIKE; no client-side filtering; empty state shown when no results	3
+
+Server-side Filters	Department & Status filters via SQL WHERE; combined with search (AND logic); reset restores full list	3
+
+Server-side Sort	Sorting via SQL ORDER BY; works with filters; direction toggles correctly	2
+
+Pagination	page & pageSize sent to API; pagination UI works; correct records fetched	3
+
+Add Employee (Create)	POST call works; 201 Created; persists in DB; UI refresh; 409 conflict handled	3
+
+Edit Employee (Update)	PUT call works; 200 OK; updates persist; UI refresh	2
+
+Delete Employee	DELETE call works; 200 OK; record removed; UI refresh	2
+
+Swagger Documentation	All endpoints documented; JWT security enabled; endpoints testable; schemas correct	2
+		
+UI/UX Design [15 Marks]
+
+Criterion	What Is Expected	Marks
+
+Responsive Layout	Works across desktop, tablet, mobile; no layout issues	3
+
+Bootstrap Usage	Proper use of UI components (Navbar, Cards, Table, Modal, etc.)	3
+
+Role-based UI	Admin has full access; Viewer has read-only mode; role badge visible	3
+
+Validation & Errors	Client + server validation; inline errors; loading spinner; toast messages	3
+
+Pagination UX	Clear pagination; active page highlight; boundary handling; accurate labels	3
+		
+Code Architecture [30 Marks]
+
+Criterion	What Is Expected	Marks
+
+storageService Boundary	Only storageService.js calls fetch(); consistent API abstraction	6
+
+Backend Service Layer	Business logic in services; controllers remain thin	6
+
+EF Core Correct Usage	IQueryable used; filtering before execution; Skip/Take applied last	6
+
+CORS + Middleware	Proper middleware order; JWT config; CORS setup; AllowAnonymous used correctly	6
+
+Readability & Comments	XML docs in C#; JSDoc in JS; consistent naming conventions	6
+		
+Testing, Validation and Edge Cases [15 Marks]
+
+Criterion	What Is Expected	Marks
+
+API validation edge cases	Proper validation errors (400, 409, etc.); invalid inputs rejected	3
+
+JWT enforcement edge cases	Correct handling of 401/403 scenarios; role-based enforcement works	3
+
+Pagination edge cases	Handles invalid pages, caps pageSize, normalizes page values	2
+
+MP1 Unit Tests still pass	Existing Jest tests pass without modification	2
+
+NUnit + Moq Tests	Test coverage with NUnit; Moq usage; in-memory DB; tests pass	5
+		
+
+Application Working [5 Marks]
+
+Criterion	What Is Expected	Marks
+
+Application working and runs successfully	No console errors; no JS or API exceptions; frontend + backend run smoothly; all components load correctly	5
+
+
+
