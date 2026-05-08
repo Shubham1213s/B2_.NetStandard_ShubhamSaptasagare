@@ -1,0 +1,98 @@
+[
+  {
+    "id": "INC001",
+    "title": "Database connection timeout on prod-db-01",
+    "description": "Production database prod-db-01 is experiencing repeated connection timeouts. All services relying on it are down. Immediate attention required.",
+    "reported_by": "monitoring-bot",
+    "timestamp": "2024-04-01T08:15:00Z",
+    "assigned_team": "Database-Ops"
+  },
+  {
+    "id": "INC002",
+    "title": "Suspicious login attempts from unknown IP",
+    "description": "Multiple failed login attempts detected from IP 203.0.113.42. Possible brute-force attack targeting admin accounts.",
+    "reported_by": "security-scanner",
+    "timestamp": "2024-04-01T09:00:00Z",
+    "assigned_team": "Security-Team"
+  },
+  {
+    "id": "INC003",
+    "title": "Checkout service returning NullPointerException",
+    "description": "The checkout microservice is throwing NullPointerException on every order submission. Stack trace indicates a null cart reference in CartService.java:142.",
+    "reported_by": "john.doe",
+    "timestamp": "2024-04-01T09:30:00Z",
+    "assigned_team": "App-Dev"
+  },
+  {
+    "id": "INC004",
+    "title": "Network switch offline in DC rack B",
+    "description": "The Cisco switch in Data Centre rack B is offline. All servers connected via VLAN 20 are unreachable. Production environment impacted.",
+    "reported_by": "noc-team",
+    "timestamp": "2024-04-01T10:00:00Z",
+    "assigned_team": "Network-Ops"
+  },
+  {
+    "id": "INC005",
+    "title": "Ransomware signature detected on workstation",
+    "description": "AV scanner detected a ransomware signature (WannaCry variant) on workstation WIN-FINANCE-04. Machine isolated from network. Breach may have occurred.",
+    "reported_by": "av-agent",
+    "timestamp": "2024-04-01T10:45:00Z",
+    "assigned_team": "Security-Team"
+  },
+  {
+    "id": "INC006",
+    "title": "Payment gateway timeout — Stripe API 503",
+    "description": "The Stripe payment gateway integration is returning HTTP-503 Service Unavailable. All payment transactions are failing. Revenue impacted.",
+    "reported_by": "jane.smith",
+    "timestamp": "2024-04-01T11:00:00Z",
+    "assigned_team": "App-Dev"
+  },
+  {
+    "id": "INC007",
+    "title": "Intermittent packet loss on VLAN 30",
+    "description": "Monitoring shows 15% intermittent packet loss on VLAN 30 between switches SW-CORE-01 and SW-DIST-03. Affecting file transfer services.",
+    "reported_by": "network-monitor",
+    "timestamp": "2024-04-01T11:30:00Z",
+    "assigned_team": "Network-Ops"
+  },
+  {
+    "id": "INC008",
+    "title": "Phishing email reported by 3 employees",
+    "description": "Three employees have forwarded a phishing email impersonating the IT helpdesk requesting password resets. Links redirect to a spoofed login page.",
+    "reported_by": "helpdesk",
+    "timestamp": "2024-04-01T12:00:00Z",
+    "assigned_team": "Security-Team"
+  },
+  {
+    "id": "INC009",
+    "title": "API response slow — P95 latency 4.2s",
+    "description": "The product catalogue API is degraded. P95 latency has risen to 4.2 seconds — well above the 500ms SLA. Root cause unknown, investigation ongoing.",
+    "reported_by": "apm-tool",
+    "timestamp": "2024-04-01T12:30:00Z",
+    "assigned_team": "App-Dev"
+  },
+  {
+    "id": "INC010",
+    "title": "Scheduled job failed — non-production env",
+    "description": "The nightly ETL job failed in the staging environment due to a missing configuration variable. No production impact. Low priority fix required.",
+    "reported_by": "scheduler",
+    "timestamp": "2024-04-01T03:00:00Z",
+    "assigned_team": "Data-Eng"
+  },
+  {
+    "id": "INC011",
+    "title": "Minor firewall rule misconfiguration found",
+    "description": "A routine audit identified a firewall rule that permits traffic on an unused port 8088. Risk is low but the rule should be removed for compliance.",
+    "reported_by": "audit-bot",
+    "timestamp": "2024-04-01T14:00:00Z",
+    "assigned_team": "Security-Team"
+  },
+  {
+    "id": "INC012",
+    "title": "DNS resolution intermittent on 10.2.0.0/16",
+    "description": "DNS queries from the 10.2.0.0/16 subnet are failing intermittently. Affecting ~30 hosts. Issue is slow and degraded rather than a full outage.",
+    "reported_by": "dns-monitor",
+    "timestamp": "2024-04-01T14:30:00Z",
+    "assigned_team": "Network-Ops"
+  }
+]

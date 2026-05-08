@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang='en'>
+<head>
+    <meta charset='utf-8'/>
+    <title>IT Incident Auto-Triage Report</title>
+    <meta name='viewport' content='width=device-width,initial-scale=1' />
+    <style>
+        body { font-family: 'Segoe UI', Roboto, Arial, sans-serif; margin:0; background:#f5f7fb; color:#333 }
+        header { background:#174a6e; color:#fff; padding:18px 36px; box-shadow:0 2px 6px rgba(0,0,0,.08) }
+        header h1 { margin:0; font-size:18px }
+        .container { max-width:1400px; margin:28px auto; padding:0 36px }
+        .meta { color:#9fb0bf; margin-top:6px }
+        .cards { display:flex; gap:20px; margin:24px 0 28px; flex-wrap:wrap }
+        .card { background:#fff; padding:18px 22px; border-radius:8px; box-shadow:0 2px 6px rgba(0,0,0,.06); flex:1; text-align:center; min-width:130px }
+        .card.total { flex:2 }
+        .card .big { font-size:28px; font-weight:700 }
+        .card .label { color:#6b7280; margin-top:8px }
+        .breakdowns { display:flex; gap:32px; margin-bottom:24px; align-items:flex-start; flex-wrap:wrap }
+        .breakdowns .box { background:#fff; padding:20px; border-radius:8px; box-shadow:0 2px 6px rgba(0,0,0,.06); flex:1; min-width:280px }
+        ul { margin:0; padding-left:18px }
+        .severity-list li.sev-item { display:flex; align-items:center; gap:12px; margin:10px 0 }
+        .severity-list .badge { padding:8px 12px; border-radius:18px; font-size:0.95em; font-weight:700 }
+        .severity-list .sev-count { color:#374151; margin-left:8px; font-weight:700 }
+        table { width:100%; border-collapse:collapse; background:#fff; border-radius:8px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,.06); font-size:14px }
+        th { text-align:left; padding:14px 18px; background:#0b3b5a; color:#fff; font-weight:700 }
+        td { padding:12px 18px; border-bottom:1px solid #f0f2f5; vertical-align:middle }
+        .badge { color:#fff; padding:6px 10px; border-radius:12px; font-weight:700; text-transform:capitalize; display:inline-block }
+        .mono { font-family: Consolas, monospace; color:#0b5394 }
+        .title { max-width:640px }
+        footer { text-align:center; color:#9aa3af; padding:18px 0; font-size:12px }
+
+        @media (max-width: 900px) {
+            .container { padding:0 18px }
+            .cards { gap:12px }
+            .card .big { font-size:22px }
+            .breakdowns { gap:18px }
+            .breakdowns .box { padding:14px }
+            th, td { padding:10px 12px }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class='container'>
+            <h1>IT Incident Auto-Triage Report</h1>
+            <div class='meta'>Generated: 2026-05-01 00:40:53 &nbsp;|&nbsp; Total incidents: 12</div>
+        </div>
+    </header>
+
+    <main class='container'>
+        <div class='cards'>
+            <div class='card total'><div class='big'>12</div><div class='label'>Total</div></div><div class='card'><div class='big' style='color:#e74c3c'>5</div><div class='label'>Critical</div></div><div class='card'><div class='big' style='color:#ff9900'>2</div><div class='label'>High</div></div><div class='card'><div class='big' style='color:#f1c40f'>3</div><div class='label'>Medium</div></div><div class='card'><div class='big' style='color:#2ecc71'>2</div><div class='label'>Low</div></div>
+        </div>
+
+        <div class='breakdowns'>
+            <div class='box'>
+                <h3>Breakdown by Type</h3>
+                <ul>
+                    <li>AppIncident: <strong>4</strong></li><li>SecurityIncident: <strong>3</strong></li><li>NetworkIncident: <strong>5</strong></li>
+                </ul>
+            </div>
+            <div class='box'>
+                <h3>Breakdown by Severity</h3>
+                <ul class='severity-list'>
+                    <li class='sev-item'><span class='badge' style='background:#e74c3c;'>Critical</span><span class='sev-count'>— 5</span></li><li class='sev-item'><span class='badge' style='background:#ff9900;'>High</span><span class='sev-count'>— 2</span></li><li class='sev-item'><span class='badge' style='background:#f1c40f;'>Medium</span><span class='sev-count'>— 3</span></li><li class='sev-item'><span class='badge' style='background:#2ecc71;'>Low</span><span class='sev-count'>— 2</span></li>
+                </ul>
+            </div>
+        </div>
+
+        <section>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Title</th>
+                        <th>Type</th>
+                        <th>Severity</th>
+                        <th>Assigned Team</th>
+                        <th>ServiceNow</th>
+                        <th>Jira</th>
+                        <th>Azure</th>
+                        <th>Timestamp</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>INC001</td><td class='title'>Database connection timeout on prod-db-01</td><td>AppIncident</td><td><span class='badge' style='background:#e74c3c;'>critical</span></td><td>Database-Ops</td><td class='mono'>MOCK-SNOW-INC001</td><td class='mono'>KAN-MOCK-INC001</td><td class='mono'>MOCK-AZURE-INC001</td><td>2024-04-01 08:15</td></tr><tr><td>INC002</td><td class='title'>Suspicious login attempts from unknown IP</td><td>SecurityIncident</td><td><span class='badge' style='background:#2ecc71;'>low</span></td><td>Security-Team</td><td class='mono'>MOCK-SNOW-INC002</td><td class='mono'>KAN-MOCK-INC002</td><td class='mono'>MOCK-AZURE-INC002</td><td>2024-04-01 09:00</td></tr><tr><td>INC003</td><td class='title'>Checkout service returning NullPointerException</td><td>AppIncident</td><td><span class='badge' style='background:#ff9900;'>high</span></td><td>App-Dev</td><td class='mono'>MOCK-SNOW-INC003</td><td class='mono'>KAN-MOCK-INC003</td><td class='mono'>MOCK-AZURE-INC003</td><td>2024-04-01 09:30</td></tr><tr><td>INC004</td><td class='title'>Network switch offline in DC rack B</td><td>NetworkIncident</td><td><span class='badge' style='background:#e74c3c;'>critical</span></td><td>Network-Ops</td><td class='mono'>MOCK-SNOW-INC004</td><td class='mono'>KAN-MOCK-INC004</td><td class='mono'>MOCK-AZURE-INC004</td><td>2024-04-01 10:00</td></tr><tr><td>INC005</td><td class='title'>Ransomware signature detected on workstation</td><td>SecurityIncident</td><td><span class='badge' style='background:#e74c3c;'>critical</span></td><td>Security-Team</td><td class='mono'>MOCK-SNOW-INC005</td><td class='mono'>KAN-MOCK-INC005</td><td class='mono'>MOCK-AZURE-INC005</td><td>2024-04-01 10:45</td></tr><tr><td>INC006</td><td class='title'>Payment gateway timeout — Stripe API 503</td><td>AppIncident</td><td><span class='badge' style='background:#ff9900;'>high</span></td><td>App-Dev</td><td class='mono'>MOCK-SNOW-INC006</td><td class='mono'>KAN-MOCK-INC006</td><td class='mono'>MOCK-AZURE-INC006</td><td>2024-04-01 11:00</td></tr><tr><td>INC007</td><td class='title'>Intermittent packet loss on VLAN 30</td><td>NetworkIncident</td><td><span class='badge' style='background:#f1c40f;'>medium</span></td><td>Network-Ops</td><td class='mono'>MOCK-SNOW-INC007</td><td class='mono'>KAN-MOCK-INC007</td><td class='mono'>MOCK-AZURE-INC007</td><td>2024-04-01 11:30</td></tr><tr><td>INC008</td><td class='title'>Phishing email reported by 3 employees</td><td>SecurityIncident</td><td><span class='badge' style='background:#f1c40f;'>medium</span></td><td>Security-Team</td><td class='mono'>MOCK-SNOW-INC008</td><td class='mono'>KAN-MOCK-INC008</td><td class='mono'>MOCK-AZURE-INC008</td><td>2024-04-01 12:00</td></tr><tr><td>INC009</td><td class='title'>API response slow — P95 latency 4.2s</td><td>NetworkIncident</td><td><span class='badge' style='background:#f1c40f;'>medium</span></td><td>App-Dev</td><td class='mono'>MOCK-SNOW-INC009</td><td class='mono'>KAN-MOCK-INC009</td><td class='mono'>MOCK-AZURE-INC009</td><td>2024-04-01 12:30</td></tr><tr><td>INC010</td><td class='title'>Scheduled job failed — non-production env</td><td>AppIncident</td><td><span class='badge' style='background:#e74c3c;'>critical</span></td><td>Data-Eng</td><td class='mono'>MOCK-SNOW-INC010</td><td class='mono'>KAN-MOCK-INC010</td><td class='mono'>MOCK-AZURE-INC010</td><td>2024-04-01 03:00</td></tr><tr><td>INC011</td><td class='title'>Minor firewall rule misconfiguration found</td><td>NetworkIncident</td><td><span class='badge' style='background:#2ecc71;'>low</span></td><td>Security-Team</td><td class='mono'>MOCK-SNOW-INC011</td><td class='mono'>KAN-MOCK-INC011</td><td class='mono'>MOCK-AZURE-INC011</td><td>2024-04-01 14:00</td></tr><tr><td>INC012</td><td class='title'>DNS resolution intermittent on 10.2.0.0/16</td><td>NetworkIncident</td><td><span class='badge' style='background:#e74c3c;'>critical</span></td><td>Network-Ops</td><td class='mono'>MOCK-SNOW-INC012</td><td class='mono'>KAN-MOCK-INC012</td><td class='mono'>MOCK-AZURE-INC012</td><td>2024-04-01 14:30</td></tr>
+                </tbody>
+            </table>
+        </section>
+    </main>
+
+    <footer>
+        Generated by IT Incident Auto-Triage & Tracker — 2026-05-01 00:40:53
+    </footer>
+</body>
+</html>
